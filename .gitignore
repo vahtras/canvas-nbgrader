@@ -1,0 +1,14 @@
+.venv*
+*.pyc
+dist
+_*
+.pytest*
+.vscode
+*.zip
+*.csv
+*ipynb*
+build
+*egg-info
+.coverage
+untracked
+htmlcov

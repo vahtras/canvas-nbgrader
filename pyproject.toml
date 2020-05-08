@@ -1,0 +1,9 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "cnb"
+author = "Olav Vahtras"
+author-email = "vahtras@kth.se"
+requires = ["pandas", "wget", "canvasapi"]
