@@ -6,7 +6,6 @@ import zipfile
 
 import pytest
 import pandas as pd
-import pandas.testing as pdt
 
 import cnb
 
@@ -69,6 +68,7 @@ class TestConnect:
 
         assert c.connection.get_courses.called
 
+    @pytest.mark.skip
     def test_verify_connection(self, capsys):
         sys.argv[1:] = ['--verify']
         cnb.main()
@@ -104,7 +104,9 @@ class TestWithFixture:
         MockPath().mkdir.assert_called()
 
     @mock.patch('cnb.requests.get')
-    def test_download_submissions_with_attachments(self, mock_get, canvas_course):
+    def test_download_submissions_with_attachments(
+        self, mock_get, canvas_course
+    ):
         zip_level = zipfile.ZIP_DEFLATED
         with mock.patch("cnb.zipfile") as mock_zip:
             mock_zip.ZIP_DEFLATED = zip_level
@@ -118,11 +120,14 @@ class TestWithFixture:
                 canvas_course.generate_unique_filename = mock_guf
                 canvas_course.student_names = {88: 'yo ho'}
 
-                canvas_course.download_submissions_with_attachments(7, "nb_name")
-                mock_guf.assert_called_with(submission, 'nb_name')
+                canvas_course.download_submissions_with_attachments(
+                    7, "nb_name"
+                )
+                mock_guf.assert_called_with(submission, 'nb_name.ipynb')
 
         mock_zip.ZipFile.assert_called_with(
-            "submissions.zip", "w", compression=zip_level
+            "downloaded/nb_name/archive/submissions.zip", "w",
+            compression=zip_level
         )
 
     @pytest.mark.parametrize(
@@ -195,7 +200,7 @@ class TestIterators:
         submission_without = mock.MagicMock(name="without", spec=[])
         submissions = [submission_with, submission_without]
 
-        calculated = list(cnb.has_attachments(submissions)) 
+        calculated = list(cnb.has_attachments(submissions))
         expected = [submission_with]
 
         assert calculated == expected
@@ -239,10 +244,10 @@ class TestIterators:
 
 
 class TestConfig:
-    @mock.patch.dict("cnb.os.environ", {"foo": "bar"})
+    @mock.patch.dict("cnb.os.environ", {"config_file": "foo"})
     def test_env(self):
         config = cnb.get_config()
-        assert config.get("foo") == "bar"
+        assert config.get("config_file") == "foo"
 
     def test_conf(self):
         sys.argv[1:] = ['-i', 'foo.ini']
@@ -278,7 +283,9 @@ class TestMain:
     @mock.patch('cnb.has_attachments')
     @mock.patch('cnb.has_url')
     @mock.patch('cnb.Canvas')
-    def test_list_ungraded(self, MockCanvas, has_att, has_url, capsys, canvas_course):
+    def test_list_ungraded(
+            self, MockCanvas, has_att, has_url, capsys, canvas_course
+    ):
         os.environ['CANVAS_URL'] = 'foo'
         os.environ['CANVAS_TOKEN'] = 'bar'
 
@@ -349,7 +356,7 @@ class TestNBG:
                 )
             )
             mock_read_csv.return_value = grades
-            gs = canvas_course.read_grades(assignment=2)
+            gs = canvas_course.get_nbgrader_grades(assignment=2)
 
         assert mock_read_csv.called_with('grades.csv')
         expected = pd.Series([6], index=[4], name='score')
@@ -360,11 +367,10 @@ class TestNBG:
         submission = mock.MagicMock(
             user_id=88
         )
-        scores={88: 99}
         submissions = [submission]
 
-        canvas_course.update_grades(submissions, scores)
+        canvas_course.update_grades(submissions)
 
-        assert submission.edit().called_with(submission={'posted_grade': 'complete'})
-
-
+        assert submission.edit().called_with(
+            submission={'posted_grade': 'complete'}
+        )

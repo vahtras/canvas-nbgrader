@@ -188,7 +188,7 @@ class CanvasCourse:
 
         return lms_grades
 
-    def update_grades(self, submissions, scores):
+    def update_grades(self, submissions):
         for submission in submissions:
             print(submission.user_id, PASS)
             submission.edit(submission={'posted_grade': 'complete'})
@@ -282,6 +282,9 @@ def command_line_args():
     )
     parser.add_argument(
         '-i', '--config-file', default=None, help='List Students'
+    )
+    parser.add_argument(
+        '-v', '--verify', default=None, help='List Students'
     )
 
     return parser.parse_args().__dict__
