@@ -68,12 +68,13 @@ class TestConnect:
 
         assert c.connection.get_courses.called
 
-    @pytest.mark.skip
-    def test_verify_connection(self, capsys):
-        sys.argv[1:] = ['--verify']
+    def test_verify_connection(self, MockCanvas, capsys):
+        os.environ['CANVAS_URL'] = 'foo'
+        os.environ['CANVAS_TOKEN'] = 'bar'
+        sys.argv[1:] = ['-c', '1000', '--verify']
         cnb.main()
         std = capsys.readouterr()
-        assert std.out == "Connected to foo as bar"
+        assert std.out == "Connected to foo as bar\n"
 
 
 class TestWithFixture:

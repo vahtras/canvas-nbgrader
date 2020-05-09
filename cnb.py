@@ -284,7 +284,7 @@ def command_line_args():
         '-i', '--config-file', default=None, help='List Students'
     )
     parser.add_argument(
-        '-v', '--verify', default=None, help='List Students'
+        '-v', '--verify', action='store_true', help='Verify connection'
     )
 
     return parser.parse_args().__dict__
@@ -319,6 +319,11 @@ def main():
 
     if args['assignment']:
         list_ungraded(c, args['assignment'])
+
+    if args['verify']:
+        print(
+            f"Connected to {config['canvas_url']} as {config['canvas_token']}"
+        )
 
 
 if __name__ == "__main__":
