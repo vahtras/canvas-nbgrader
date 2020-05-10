@@ -87,15 +87,6 @@ class CanvasCourse:
         })
         return df
 
-    def init_lab(self, lab: str):
-        """
-        Assignment name in nbgrader
-
-        :param lab:
-            NBgrader name
-        """
-        self.lab = lab
-
     def download_submissions_with_attachments(
             self, assignment_id: int, nb_name: str
             ):
