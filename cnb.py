@@ -304,6 +304,12 @@ def main():
     args = command_line_args()
     config = get_config(**args)
 
+    if args['verify']:
+        print(
+            f"Connected to {config['canvas_url']} as {config['canvas_token']}"
+        )
+        exit()
+
     if 'course_id' not in config:
         print("Course-id undefined")
         exit()
@@ -315,11 +321,6 @@ def main():
 
     if args['assignment']:
         list_ungraded(c, args['assignment'])
-
-    if args['verify']:
-        print(
-            f"Connected to {config['canvas_url']} as {config['canvas_token']}"
-        )
 
 
 if __name__ == "__main__":

@@ -72,9 +72,11 @@ class TestConnect:
         os.environ['CANVAS_URL'] = 'foo'
         os.environ['CANVAS_TOKEN'] = 'bar'
         sys.argv[1:] = ['-c', '1000', '--verify']
-        cnb.main()
+        with mock.patch('cnb.exit') as mock_exit:
+            cnb.main()
         std = capsys.readouterr()
         assert std.out == "Connected to foo as bar\n"
+        mock_exit.assert_called()
 
 
 class TestWithFixture:
