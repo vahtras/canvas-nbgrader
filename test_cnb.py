@@ -13,7 +13,7 @@ import cnb
 @pytest.fixture
 def canvas_course():
     "Returns a CanvasCourse object with a mocked Canvas connection"
-    with mock.patch("cnb.Canvas"):
+    with mock.patch("cnb.canvasapi.Canvas"):
         canvas_course = cnb.CanvasCourse(
             course_id=123,
             canvas_url='foo',
@@ -22,7 +22,7 @@ def canvas_course():
         yield canvas_course
 
 
-@mock.patch("cnb.Canvas")
+@mock.patch("cnb.canvasapi.Canvas")
 class TestConnect:
     "Set up connection with different config methods"
 
@@ -267,7 +267,7 @@ class TestMain:
         assert std.out == 'Course-id undefined\n'
         mock_exit.assert_called()
 
-    @mock.patch('cnb.Canvas')
+    @mock.patch('cnb.canvasapi.Canvas')
     def test_list_students(self, MockCanvas, capsys, canvas_course):
         os.environ['CANVAS_URL'] = 'foo'
         os.environ['CANVAS_TOKEN'] = 'bar'
@@ -283,7 +283,7 @@ class TestMain:
 
     @mock.patch('cnb.has_attachments')
     @mock.patch('cnb.has_url')
-    @mock.patch('cnb.Canvas')
+    @mock.patch('cnb.canvasapi.Canvas')
     def test_list_ungraded(
             self, MockCanvas, has_att, has_url, capsys, canvas_course
     ):

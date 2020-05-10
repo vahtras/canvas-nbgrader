@@ -13,7 +13,7 @@ import zipfile
 
 import requests
 import pandas as pd
-from canvasapi import Canvas
+import canvasapi
 
 __version__ = "0.0.1"
 
@@ -36,7 +36,9 @@ class CanvasConnection:
             raise ConfigError('canvas_url not defined')
         if cfg['canvas_token'] is None:
             raise TokenError('canvas_token not defined')
-        self.connection = Canvas(cfg['canvas_url'], cfg['canvas_token'])
+        self.connection = canvasapi.Canvas(
+            cfg['canvas_url'], cfg['canvas_token']
+        )
 
     def list_courses(self):
         for course in self.connection.get_courses():
