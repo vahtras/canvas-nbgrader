@@ -73,7 +73,7 @@ class CanvasCourse:
 
     def get_students_as_df(self) -> pd.DataFrame:
         """
-        Return students registered  as dataframe
+        Return students registered  as pandas dataframe
         """
         students = self.students()
         ids = [s.id for s in students]
@@ -87,14 +87,6 @@ class CanvasCourse:
         })
         return df
 
-    def import_students(self):
-        """
-        Import students to nbgrader
-
-        Call: 'nbgrader db student import students.csv'
-        """
-        subprocess.run('nbgrader db student import students.csv'.split())
-
     def init_lab(self, lab: str):
         """
         Assignment name in nbgrader
@@ -103,13 +95,6 @@ class CanvasCourse:
             NBgrader name
         """
         self.lab = lab
-
-    def init_downloads_area(self):
-        """
-        Initialize nbgrader downloads directory
-        """
-        path = pathlib.Path(f'downloaded/{self.lab}/archive')
-        path.mkdir(parents=True, exist_ok=True)
 
     def download_submissions_with_attachments(
             self, assignment_id: int, nb_name: str
@@ -194,6 +179,24 @@ class CanvasCourse:
         for submission in submissions:
             print(submission.user_id, PASS)
             submission.edit(submission={'posted_grade': 'complete'})
+
+
+class NBGraderInterface():
+
+    def import_students(self):
+        """
+        Import students to nbgrader
+
+        Call: 'nbgrader db student import students.csv'
+        """
+        subprocess.run('nbgrader db student import students.csv'.split())
+
+    def init_downloads_area(self, lab):
+        """
+        Initialize nbgrader downloads directory
+        """
+        path = pathlib.Path(f'downloaded/{lab}/archive')
+        path.mkdir(parents=True, exist_ok=True)
 
 
 def has_attachments(submissions):

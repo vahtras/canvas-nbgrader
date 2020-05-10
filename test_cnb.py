@@ -93,14 +93,9 @@ class TestWithFixture:
             "students.csv", index=False
         )
 
-    def test_init_nblab(self, canvas_course):
-        canvas_course.init_lab("Python")
-        assert canvas_course.lab == "Python"
-
     def test_init_downloads_area(self, canvas_course):
-        canvas_course.init_lab("foo")
         with mock.patch("cnb.pathlib.Path") as MockPath:
-            canvas_course.init_downloads_area()
+            cnb.NBGraderInterface().init_downloads_area('foo')
         MockPath.assert_called_with(f"downloaded/foo/archive")
         MockPath().mkdir.assert_called()
 
@@ -178,19 +173,10 @@ class TestWithFixture:
         canvas_course.course.name = 'foo'
         assert str(canvas_course) == 'foo'
 
-    @mock.patch('cnb.subprocess')
-    def test_import(self, mock_subprocessing, canvas_course):
-        canvas_course.import_students()
-        mock_subprocessing.run.assert_called_with(
-            ['nbgrader', 'db', 'student', 'import', 'students.csv']
-        )
-
     def test_lab(self, canvas_course):
-        canvas_course.init_lab('foo')
-        assert canvas_course.lab == 'foo'
 
         with mock.patch('cnb.pathlib.Path') as MockPath:
-            canvas_course.init_downloads_area()
+            cnb.NBGraderInterface().init_downloads_area('foo')
         assert MockPath.called_with('downloaded/foo/archive')
         assert MockPath().mkdir.called_with(exist_ok=True)
 
@@ -347,6 +333,14 @@ class TestSandbox:
 
 
 class TestNBG:
+
+    @mock.patch('cnb.subprocess')
+    def test_import(self, mock_subprocessing, canvas_course):
+        cnb.NBGraderInterface().import_students()
+        mock_subprocessing.run.assert_called_with(
+            ['nbgrader', 'db', 'student', 'import', 'students.csv']
+        )
+
     def test_read(self, canvas_course):
         with mock.patch('cnb.pd.read_csv') as mock_read_csv:
             grades = pd.DataFrame(
