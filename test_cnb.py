@@ -97,7 +97,7 @@ class TestWithFixture:
 
     def test_init_downloads_area(self, canvas_course):
         with mock.patch("cnb.pathlib.Path") as MockPath:
-            cnb.NBGraderInterface().init_downloads_area('foo')
+            canvas_course.nbgrader.init_downloads_area('foo')
         MockPath.assert_called_with(f"downloaded/foo/archive")
         MockPath().mkdir.assert_called()
 
@@ -178,7 +178,7 @@ class TestWithFixture:
     def test_lab(self, canvas_course):
 
         with mock.patch('cnb.pathlib.Path') as MockPath:
-            cnb.NBGraderInterface().init_downloads_area('foo')
+            canvas_course.nbgrader.init_downloads_area('foo')
         assert MockPath.called_with('downloaded/foo/archive')
         assert MockPath().mkdir.called_with(exist_ok=True)
 
@@ -338,7 +338,7 @@ class TestNBG:
 
     @mock.patch('cnb.subprocess')
     def test_import(self, mock_subprocessing, canvas_course):
-        cnb.NBGraderInterface().import_students()
+        canvas_course.nbgrader.import_students()
         mock_subprocessing.run.assert_called_with(
             ['nbgrader', 'db', 'student', 'import', 'students.csv']
         )

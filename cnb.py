@@ -53,6 +53,7 @@ class CanvasCourse:
         self.course_id = self.config['course_id']
         self.course = self.canvas.connection.get_course(self.course_id)
         self.student_names = {s.id: s.sortable_name for s in self.students()}
+        self.nbgrader = NBGraderInterface()
 
     def __str__(self):
         return self.course.name
