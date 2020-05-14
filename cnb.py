@@ -15,6 +15,8 @@ import requests
 import pandas as pd
 import canvasapi
 
+from util import Timer
+
 __version__ = "0.0.1"
 
 PASS = "\033[32mPASSED\033[00m"
@@ -52,14 +54,18 @@ class CanvasCourse:
         self.canvas = CanvasConnection(**config)
         self.course_id = self.config['course_id']
         self.course = self.canvas.connection.get_course(self.course_id)
-        self.student_names = {s.id: s.sortable_name for s in self.students()}
+        self.students = {s.id: s for s in self.get_students()}
+        self.student_names = {
+            sid: s.sortable_name
+            for sid, s in self.students.items()
+        }
         self.nbgrader = NBGraderInterface()
 
     def __str__(self):
         return self.course.name
 
     @functools.lru_cache()
-    def students(self):
+    def get_students(self):
         """
         Return students for course from CanvasAPI
         """
@@ -76,7 +82,7 @@ class CanvasCourse:
         """
         Return students registered  as pandas dataframe
         """
-        students = self.students()
+        students = self.get_students()
         ids = [s.id for s in students]
         names = [s.sortable_name for s in students]
         emails = [getattr(s, 'login_id', None) for s in students]
@@ -89,7 +95,7 @@ class CanvasCourse:
         return df
 
     def download_submissions_with_attachments(
-            self, assignment_id: int, nb_name: str
+            self, assignment_id: int, nb_name: str, filters=[],
             ):
         """
         Create zipfile of submission attachments as in Canvas web client"
@@ -100,23 +106,33 @@ class CanvasCourse:
             NBgrader assignment name
         """
         submissions = has_attachments(self.isubmissions(assignment_id))
+        for f in filters:
+            submissions = f(submissions)
+        submissions = list(submissions)
+
+        filenames = [
+            self.generate_unique_filename(s, nb_name + ".ipynb")
+            for s in submissions
+        ]
+
+        with Timer('downloads'):
+            downloads = [
+                requests.get(s.attachments[0]['url']).text
+                for s in submissions
+            ]
+
         with zipfile.ZipFile(
             f'downloaded/{nb_name}/archive/submissions.zip', 'w',
             compression=zipfile.ZIP_DEFLATED
-        ) as zp:
+         ) as zp:
             for i, submission in enumerate(sorted(
                 submissions, key=lambda s:
                 self.student_names[s.user_id]
-            ), start=1):
-                attachment = submission.attachments[0]
-                r = requests.get(attachment['url'])
-                filename = self.generate_unique_filename(
-                    submission, nb_name + ".ipynb"
-                )
-                zp.writestr(filename, r.text)
+            )):
+                zp.writestr(filenames[i], downloads[i])
                 print(
-                    f'{i}. {self.student_names[submission.user_id]}:'
-                    f' {filename}'
+                    f'{i+1}. {self.student_names[submission.user_id]}:'
+                    f' {filenames[i]}'
                 )
         print(f'-> downloaded/{nb_name}/archive/submissions.zip')
 
@@ -133,8 +149,7 @@ class CanvasCourse:
             s.attachments[0]['url']
         ).group(1)
 
-        course = self.canvas.connection.get_course(submission.course_id)
-        user = course.get_user(submission.user_id)
+        user = self.students[submission.user_id]
         last, first = user.sortable_name.split(', ')
         lastfirst = f"{last}{first}".replace(' ', '').lower()
 
@@ -159,7 +174,7 @@ class CanvasCourse:
         lms_grades = pd.Series(
             {
                 student.id: assignment.get_submission(student).grade
-                for student in self.students()
+                for student in self.get_students()
             },
             name='lms_grades'
         )

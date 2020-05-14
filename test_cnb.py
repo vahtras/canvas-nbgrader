@@ -117,14 +117,15 @@ class TestWithFixture:
         canvas_course.student_names = {88: 'yo ho'}
 
         submission = mock.MagicMock(
-                attachments=[{'url': '...files/7/download/foo.ipynb'}],
-                user_id=88
-            )
+            attachments=[{'url': '...files/7/download/foo.ipynb'}],
+            user_id=88,
+            grade=None,
+        )
         mock_has_attachments.return_value = [submission]
 
         # When
         canvas_course.download_submissions_with_attachments(
-            7, "nb_name"
+            7, "nb_name", filters=[cnb.ungraded]
         )
 
         # Then
@@ -170,6 +171,10 @@ class TestWithFixture:
         upload_name, nb_name, url, user_id, user_name, expected = test_data
         submission = mock.MagicMock()
         submission.user_id = user_id
+        student = mock.MagicMock()
+        student.sortable_name = user_name
+
+        canvas_course.students = {user_id: student}
         submission.attachments = [
             dict(display_name=f"{upload_name}.ipynb", url=url)
         ]
