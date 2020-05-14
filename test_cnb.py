@@ -98,8 +98,9 @@ class TestWithFixture:
     def test_init_downloads_area(self, canvas_course):
         with mock.patch("cnb.pathlib.Path") as MockPath:
             canvas_course.nbgrader.init_downloads_area('foo')
+
         MockPath.assert_called_with(f"downloaded/foo/archive")
-        MockPath().mkdir.assert_called()
+        assert MockPath().mkdir.called_with(exist_ok=True)
 
     @mock.patch('cnb.requests.get')
     def test_download_submissions_with_attachments(
@@ -174,13 +175,6 @@ class TestWithFixture:
     def test_name(self, canvas_course):
         canvas_course.course.name = 'foo'
         assert str(canvas_course) == 'foo'
-
-    def test_lab(self, canvas_course):
-
-        with mock.patch('cnb.pathlib.Path') as MockPath:
-            canvas_course.nbgrader.init_downloads_area('foo')
-        assert MockPath.called_with('downloaded/foo/archive')
-        assert MockPath().mkdir.called_with(exist_ok=True)
 
 
 class TestIterators:
