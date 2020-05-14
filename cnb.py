@@ -115,26 +115,28 @@ class CanvasCourse:
             for s in submissions
         ]
 
+        urls = self.get_urls(submissions)
         with Timer('downloads'):
-            downloads = [
-                requests.get(s.attachments[0]['url']).text
-                for s in submissions
-            ]
+            downloads = self.get_downloads(urls)
 
+        self.zip_downloads(nb_name, filenames, downloads)
+
+    def zip_downloads(self, nb_name, filenames, downloads):
         with zipfile.ZipFile(
             f'downloaded/{nb_name}/archive/submissions.zip', 'w',
             compression=zipfile.ZIP_DEFLATED
          ) as zp:
-            for i, submission in enumerate(sorted(
-                submissions, key=lambda s:
-                self.student_names[s.user_id]
-            )):
-                zp.writestr(filenames[i], downloads[i])
-                print(
-                    f'{i+1}. {self.student_names[submission.user_id]}:'
-                    f' {filenames[i]}'
-                )
+            for filename, download in zip(filenames, downloads):
+                zp.writestr(filename, download)
+                print(f' {filename}')
         print(f'-> downloaded/{nb_name}/archive/submissions.zip')
+
+    def get_urls(self, submissions):
+        return [s.attachments[0]['url'] for s in submissions]
+
+    def get_downloads(self, urls):
+        downloads = [requests.get(url).text for url in urls]
+        return downloads
 
     def isubmissions(self, assignment_id):
         assignment = self.course.get_assignment(assignment_id)

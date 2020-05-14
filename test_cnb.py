@@ -102,11 +102,22 @@ class TestWithFixture:
         MockPath.assert_called_with(f"downloaded/foo/archive")
         assert MockPath().mkdir.called_with(exist_ok=True)
 
+    test_data = dict(
+        attachments=[{'url': '...files/7/download/foo.ipynb'}],
+        user_id=88,
+        grade=None,
+    )
+    @pytest.mark.parametrize(
+        'test_data',
+        [
+            test_data,
+        ]
+    ) 
     @mock.patch('cnb.requests.get')
     @mock.patch('cnb.zipfile')
     @mock.patch('cnb.has_attachments')
     def test_download_submissions_with_attachments(
-        self, mock_has_attachments, mock_zipfile, mock_get, canvas_course
+        self, mock_has_attachments, mock_zipfile, mock_get, test_data, canvas_course
     ):
         # Given
 
@@ -116,11 +127,7 @@ class TestWithFixture:
 
         canvas_course.student_names = {88: 'yo ho'}
 
-        submission = mock.MagicMock(
-            attachments=[{'url': '...files/7/download/foo.ipynb'}],
-            user_id=88,
-            grade=None,
-        )
+        submission = mock.MagicMock(**test_data)
         mock_has_attachments.return_value = [submission]
 
         # When
