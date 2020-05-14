@@ -106,14 +106,12 @@ class TestWithFixture:
     @mock.patch('cnb.zipfile')
     @mock.patch('cnb.has_attachments')
     def test_download_submissions_with_attachments(
-        self, mock_has_attachments, mock_zip, mock_get, canvas_course
+        self, mock_has_attachments, mock_zipfile, mock_get, canvas_course
     ):
         # Given
 
-        mock_zip.ZIP_DEFLATED = zipfile.ZIP_DEFLATED
+        mock_zipfile.ZIP_DEFLATED = zipfile.ZIP_DEFLATED
 
-        # mock_generate_unique_filename = mock.MagicMock()
-        # canvas_course.generate_unique_filename = mock_generate_unique_filename
         canvas_course.generate_unique_filename = mock.MagicMock()
 
         canvas_course.student_names = {88: 'yo ho'}
@@ -134,7 +132,7 @@ class TestWithFixture:
             submission,
             'nb_name.ipynb'
         )
-        mock_zip.ZipFile.assert_called_with(
+        mock_zipfile.ZipFile.assert_called_with(
             "downloaded/nb_name/archive/submissions.zip", "w",
             compression=zipfile.ZIP_DEFLATED
         )
