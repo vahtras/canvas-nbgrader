@@ -103,30 +103,40 @@ class TestWithFixture:
         assert MockPath().mkdir.called_with(exist_ok=True)
 
     @mock.patch('cnb.requests.get')
+    @mock.patch('cnb.zipfile')
+    @mock.patch('cnb.has_attachments')
     def test_download_submissions_with_attachments(
-        self, mock_get, canvas_course
+        self, mock_has_attachments, mock_zip, mock_get, canvas_course
     ):
-        zip_level = zipfile.ZIP_DEFLATED
-        with mock.patch("cnb.zipfile") as mock_zip:
-            mock_zip.ZIP_DEFLATED = zip_level
-            with mock.patch('cnb.has_attachments') as mock_has_attachments:
-                submission = mock.MagicMock(
-                        attachments=[{'url': '...files/7/download/foo.ipynb'}],
-                        user_id=88
-                    )
-                mock_has_attachments.return_value = [submission]
-                mock_guf = mock.MagicMock()
-                canvas_course.generate_unique_filename = mock_guf
-                canvas_course.student_names = {88: 'yo ho'}
+        # Given
 
-                canvas_course.download_submissions_with_attachments(
-                    7, "nb_name"
-                )
-                mock_guf.assert_called_with(submission, 'nb_name.ipynb')
+        mock_zip.ZIP_DEFLATED = zipfile.ZIP_DEFLATED
 
+        # mock_generate_unique_filename = mock.MagicMock()
+        # canvas_course.generate_unique_filename = mock_generate_unique_filename
+        canvas_course.generate_unique_filename = mock.MagicMock()
+
+        canvas_course.student_names = {88: 'yo ho'}
+
+        submission = mock.MagicMock(
+                attachments=[{'url': '...files/7/download/foo.ipynb'}],
+                user_id=88
+            )
+        mock_has_attachments.return_value = [submission]
+
+        # When
+        canvas_course.download_submissions_with_attachments(
+            7, "nb_name"
+        )
+
+        # Then
+        canvas_course.generate_unique_filename.assert_called_with(
+            submission,
+            'nb_name.ipynb'
+        )
         mock_zip.ZipFile.assert_called_with(
             "downloaded/nb_name/archive/submissions.zip", "w",
-            compression=zip_level
+            compression=zipfile.ZIP_DEFLATED
         )
 
     @pytest.mark.parametrize(
