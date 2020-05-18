@@ -248,6 +248,10 @@ def get_attachment_urls(submissions):
     return (s.attachments[0]['url'] for s in submissions)
 
 
+def get_submission_grades(submissions):
+    return (s.grade for s in submissions)
+
+
 def get_config(**args):
     """
     Set up configuration using priority order
@@ -323,9 +327,14 @@ def main():
     config = get_config(**args)
 
     if args['verify']:
-        print(
-            f"Connected to {config['canvas_url']} as {config['canvas_token']}"
-        )
+        if not config['canvas_url']:
+            print(f"CANVAS_URL not defined")
+        if not config['canvas_token']:
+            print(f"CANVAS_TOKEN not defined")
+        else:
+            print(
+                f"Connecting to {config['canvas_url']} as {config['canvas_token']}"
+            )
         exit()
 
     if 'course_id' not in config:
