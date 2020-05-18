@@ -55,6 +55,9 @@ class CanvasCourse:
         self.course_id = self.config['course_id']
         self.course = self.canvas.connection.get_course(self.course_id)
         self.students = {s.id: s for s in self.get_students()}
+        if 'test_student' in config:
+            u = config['test_student']
+            self.students[u.id] = u
         self.student_names = {
             sid: s.sortable_name
             for sid, s in self.students.items()
@@ -82,7 +85,7 @@ class CanvasCourse:
         """
         Return students registered  as pandas dataframe
         """
-        students = self.get_students()
+        students = self.students.values()
         ids = [s.id for s in students]
         names = [s.sortable_name for s in students]
         emails = [getattr(s, 'login_id', None) for s in students]
@@ -95,7 +98,7 @@ class CanvasCourse:
         return df
 
     def download_submissions_with_attachments(
-            self, assignment_id: int, nb_name: str, filters=[],
+            self, assignment_id: int, lab_name, nb_names: str, filters=[],
             ):
         """
         Create zipfile of submission attachments as in Canvas web client"
@@ -111,7 +114,7 @@ class CanvasCourse:
         submissions = list(submissions)
 
         filenames = [
-            self.generate_unique_filename(s, nb_name + ".ipynb")
+            self.generate_unique_filename(s, nb_names[0] + ".ipynb")
             for s in submissions
         ]
 
@@ -119,7 +122,7 @@ class CanvasCourse:
         with Timer('downloads'):
             downloads = self.get_downloads(urls)
 
-        zip_name = f'downloaded/{nb_name}/archive/submissions.zip'
+        zip_name = f'downloaded/{lab_name}/archive/submissions.zip'
         self.zip_downloads(zip_name, filenames, downloads)
 
     def zip_downloads(self, zip_name, filenames, downloads):
@@ -188,6 +191,13 @@ class CanvasCourse:
         for submission in submissions:
             print(submission.user_id, PASS)
             submission.edit(submission={'posted_grade': 'complete'})
+
+    def set_score(self, submissions, score):
+        for submission in submissions:
+            print(submission.user_id, score[submission.user_id])
+            submission.edit(
+                submission={'posted_grade': score[submission.user_id]}
+            )
 
 
 class NBGraderInterface():

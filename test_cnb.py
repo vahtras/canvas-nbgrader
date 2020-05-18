@@ -75,7 +75,7 @@ class TestConnect:
         with mock.patch('cnb.exit') as mock_exit:
             cnb.main()
         std = capsys.readouterr()
-        assert std.out == "Connected to foo as bar\n"
+        assert std.out == "Connecting to foo as bar\n"
         mock_exit.assert_called()
 
 
@@ -132,7 +132,7 @@ class TestWithFixture:
 
         # When
         canvas_course.download_submissions_with_attachments(
-            7, "nb_name", filters=[cnb.ungraded]
+            7, "lab_name", ["nb_name"], filters=[cnb.ungraded]
         )
 
         # Then
@@ -141,7 +141,7 @@ class TestWithFixture:
             'nb_name.ipynb'
         )
         mock_zipfile.ZipFile.assert_called_with(
-            "downloaded/nb_name/archive/submissions.zip", "w",
+            "downloaded/lab_name/archive/submissions.zip", "w",
             compression=zipfile.ZIP_DEFLATED
         )
 
