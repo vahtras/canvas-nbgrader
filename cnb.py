@@ -187,16 +187,21 @@ class CanvasCourse:
 
         return lms_grades
 
-    def update_grades(self, submissions):
+    def update_to_pass(self, submissions):
         for submission in submissions:
             print(submission.user_id, PASS)
             submission.edit(submission={'posted_grade': 'complete'})
 
+    def update_to_fail(self, submissions):
+        for submission in submissions:
+            print(submission.user_id, FAIL)
+            submission.edit(submission={'posted_grade': 'incomplete'})
+
     def set_score(self, submissions, score):
         for submission in submissions:
-            print(submission.user_id, score[submission.user_id])
+            print(submission.user_id, int(score[submission.user_id]))
             submission.edit(
-                submission={'posted_grade': score[submission.user_id]}
+                submission={'posted_grade': int(score[submission.user_id])}
             )
 
 
@@ -240,6 +245,18 @@ def ungraded(submissions):
         iterable over ungraded submissions
     """
     return filter(lambda s: s.grade is None, submissions)
+
+
+def unmatching_grade(submissions):
+    """
+    Filter submissions that are ungraded
+
+    :param submissions:
+        iterable
+    :return:
+        iterable over ungraded submissions
+    """
+    return filter(lambda s: not s.grade_matches_current_submission, submissions)
 
 
 def has_url(submissions):

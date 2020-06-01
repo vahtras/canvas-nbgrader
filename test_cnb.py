@@ -380,7 +380,7 @@ class TestNBG:
         )
         submissions = [submission]
 
-        canvas_course.update_grades(submissions)
+        canvas_course.update_to_pass(submissions)
 
         assert submission.edit().called_with(
             submission={'posted_grade': 'complete'}
