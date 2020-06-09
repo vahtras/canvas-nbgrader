@@ -3,6 +3,7 @@
 canvas-nbgrader facilitates exchange of data between Canvas LMS and nbgrader
 """
 import argparse
+import asyncio
 import configparser
 import functools
 import os
@@ -14,6 +15,7 @@ import zipfile
 import requests
 import pandas as pd
 import canvasapi
+import aiohttp
 
 from util import Timer
 
@@ -120,7 +122,7 @@ class CanvasCourse:
 
         urls = self.get_urls(submissions)
         with Timer('downloads'):
-            downloads = self.get_downloads(urls)
+            downloads = self.aget_downloads(urls)
 
         zip_name = f'downloaded/{lab_name}/archive/submissions.zip'
         self.zip_downloads(zip_name, filenames, downloads)
@@ -140,6 +142,22 @@ class CanvasCourse:
     def get_downloads(self, urls):
         downloads = [requests.get(url).text for url in urls]
         return downloads
+
+    def aget_downloads(self, urls):
+        downloads = asyncio.run(self.adownload_urls(urls))
+        return downloads
+
+    async def adownload_urls(self, urls):
+        tasks = []
+        for url in urls:
+            tasks.append(asyncio.create_task(self.adownload(url)))
+        downloads = await asyncio.gather(*tasks)
+        return downloads
+
+    async def adownload(self, url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                return await r.text()
 
     def isubmissions(self, assignment_id):
         assignment = self.course.get_assignment(assignment_id)

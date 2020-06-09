@@ -124,6 +124,7 @@ class TestWithFixture:
         mock_zipfile.ZIP_DEFLATED = zipfile.ZIP_DEFLATED
 
         canvas_course.generate_unique_filename = mock.MagicMock()
+        canvas_course.aget_downloads = mock.MagicMock()
 
         canvas_course.student_names = {88: 'yo ho'}
 
