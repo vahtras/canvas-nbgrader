@@ -16,6 +16,7 @@ import requests
 import pandas as pd
 import canvasapi
 import aiohttp
+import nbgrader.apps
 
 from util import Timer
 
@@ -222,8 +223,21 @@ class CanvasCourse:
                 submission={'posted_grade': int(score[submission.user_id])}
             )
 
+    def set_grade(self, submissions, grades):
+        for submission in submissions:
+            try:
+                print(submission.user_id, grades[submission.user_id])
+                submission.edit(
+                    submission={'posted_grade': grades[submission.user_id]}
+                )
+            except KeyError:
+                print(submission.user_id, 'not in grades')
 
-class NBGraderInterface():
+
+class NBGraderInterface:
+
+    def __init__(self):
+        self.api = nbgrader.apps.NbGraderAPI()
 
     def import_students(self):
         """
@@ -239,6 +253,26 @@ class NBGraderInterface():
         """
         path = pathlib.Path(f'downloaded/{lab}/archive')
         path.mkdir(parents=True, exist_ok=True)
+
+    def autograde(self, assignment_name, submissions):
+        """
+        Grade student assignments
+
+        Call: 'nbgrader autograde assignment_name --force'
+        """
+        for s in submissions:
+            user_id = s.user_id
+            subprocess.run(
+                f'nbgrader autograde {assignment_name} --student={user_id} --force'.split()
+            )
+
+    def export(self):
+        """
+        Export grade file from database
+
+        $ nbgrader export
+        """
+        subprocess.run('nbgrader export'.split())
 
 
 def has_attachments(submissions):

@@ -3,6 +3,7 @@ import os
 import sys
 from unittest import mock
 import zipfile
+import warnings
 
 import pytest
 import pandas as pd
@@ -99,7 +100,7 @@ class TestWithFixture:
         with mock.patch("cnb.pathlib.Path") as MockPath:
             canvas_course.nbgrader.init_downloads_area('foo')
 
-        MockPath.assert_called_with(f"downloaded/foo/archive")
+        MockPath.assert_called_with("downloaded/foo/archive")
         assert MockPath().mkdir.called_with(exist_ok=True)
 
     test_data = dict(
@@ -107,17 +108,19 @@ class TestWithFixture:
         user_id=88,
         grade=None,
     )
+
     @pytest.mark.parametrize(
         'test_data',
         [
             test_data,
         ]
-    ) 
+    )
     @mock.patch('cnb.requests.get')
     @mock.patch('cnb.zipfile')
     @mock.patch('cnb.has_attachments')
     def test_download_submissions_with_attachments(
-        self, mock_has_attachments, mock_zipfile, mock_get, test_data, canvas_course
+        self, mock_has_attachments, mock_zipfile, mock_get, test_data,
+        canvas_course
     ):
         # Given
 
@@ -351,6 +354,11 @@ class TestSandbox:
 
 class TestNBG:
 
+    def test_init_nbg(self, canvas_course):
+        with mock.patch('cnb.nbgrader.apps.NbGraderAPI') as mock_api:
+            cnb.NBGraderInterface()
+        mock_api.assert_called()
+
     @mock.patch('cnb.subprocess')
     def test_import(self, mock_subprocessing, canvas_course):
         canvas_course.nbgrader.import_students()
@@ -374,6 +382,27 @@ class TestNBG:
         expected = pd.Series([6], index=[4], name='score')
         assert all(gs == expected)
         assert gs.name == expected.name
+
+    @mock.patch('cnb.subprocess')
+    def test_autograde(self, mock_subprocessing, canvas_course):
+
+        submission = mock.MagicMock(
+            user_id=88
+        )
+        submissions = [submission]
+
+        canvas_course.nbgrader.autograde('assignment', submissions)
+        mock_subprocessing.run.assert_called_with(
+            'nbgrader autograde assignment --student=88 --force'.split()
+        )
+
+    @mock.patch('cnb.subprocess')
+    def test_export(self, mock_subprocessing, canvas_course):
+
+        canvas_course.nbgrader.export()
+        mock_subprocessing.run.assert_called_with(
+            ['nbgrader', 'export']
+        )
 
     def test_upgrade(self, canvas_course, capsys):
         submission = mock.MagicMock(
