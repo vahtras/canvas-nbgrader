@@ -117,7 +117,7 @@ class CanvasCourse:
         submissions = list(submissions)
 
         filenames = [
-            self.generate_unique_filename(s, nb_names[0] + ".ipynb")
+            self.generate_unique_filename(s, nb_names[0])
             for s in submissions
         ]
 
@@ -346,6 +346,7 @@ def get_config(**args):
         'canvas_url': None,
         'canvas_token': None,
         'config_file': 'config.ini',
+        'course_id': None,
     }
 
     args_config = {k: v for k, v in args.items() if v is not None}
