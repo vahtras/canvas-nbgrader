@@ -13,14 +13,15 @@ import cnb
 
 @pytest.fixture
 def canvas_course():
-    "Returns a CanvasCourse object with a mocked Canvas connection"
+    "Returns a CanvasCourse object with a mocked Canvas connection and api"
     with mock.patch("cnb.canvasapi.Canvas"):
-        canvas_course = cnb.CanvasCourse(
-            course_id=123,
-            canvas_url='foo',
-            canvas_token='bar',
-        )
-        yield canvas_course
+        with mock.patch("cnb.nbgrader.apps.NbGraderAPI"):
+            canvas_course = cnb.CanvasCourse(
+                course_id=123,
+                canvas_url='foo',
+                canvas_token='bar',
+            )
+            yield canvas_course
 
 
 @mock.patch("cnb.canvasapi.Canvas")
@@ -35,6 +36,7 @@ class TestConnect:
 
         c = cnb.CanvasConnection()
 
+        # MockParser.read.assert_called_with('config.ini')
         MockCanvas.assert_called_with("foo", "bar")
         assert c.connection == MockCanvas()
 
@@ -48,7 +50,9 @@ class TestConnect:
             'CANVAS_URL': 'foo', 'CANVAS_TOKEN': 'bar'
         }
 
-        c = cnb.CanvasConnection()
+        # Disable potential configs in os.environ
+        with mock.patch('cnb.os'):
+            c = cnb.CanvasConnection()
 
         MockCanvas.assert_called_with("foo", "bar")
         assert c.connection == MockCanvas()
@@ -136,7 +140,7 @@ class TestWithFixture:
 
         # When
         canvas_course.download_submissions_with_attachments(
-            7, "lab_name", ["nb_name"], filters=[cnb.ungraded]
+            7, "lab_name", ["nb_name.ipynb"], filters=[cnb.ungraded]
         )
 
         # Then
@@ -201,6 +205,9 @@ class TestWithFixture:
         assert str(canvas_course) == 'foo'
 
 
+Submission = collections.namedtuple('Submission', 'id user_id grade')
+
+
 class TestIterators:
     def test_has_attachments(self):
         submission_with = mock.MagicMock(name="with", attachments=["foo"])
@@ -213,15 +220,25 @@ class TestIterators:
         assert calculated == expected
 
     def test_ungraded(self):
-        Submission = collections.namedtuple('Submission', 'id grade')
         submissions = [
-            Submission(1, 'ok'),
-            Submission(2, None),
-            Submission(3, 'not ok'),
-            Submission(4, None),
+            Submission(1, 1599, 'ok'),
+            Submission(2, 1599, None),
+            Submission(3, 1600, 'not ok'),
+            Submission(4, 1600, None),
         ]
         assert list(cnb.ungraded(submissions)) \
             == [submissions[1], submissions[3]]
+
+    def test_select_student_submission(self):
+        submissions = [
+            Submission(1, 1599, 'ok'),
+            Submission(2, 1599, None),
+            Submission(3, 1600, 'not ok'),
+            Submission(4, 1600, None),
+        ]
+        user_filter = cnb.from_user(1599)
+        assert list(user_filter(submissions)) \
+            == [submissions[0], submissions[1]]
 
     def test_has_url(self):
         submission_with = mock.MagicMock(name="with")
@@ -352,21 +369,22 @@ class TestSandbox:
                 cnb.main()
 
 
+@mock.patch('cnb.nbgrader.apps.NbGraderAPI')
 class TestNBG:
 
-    def test_init_nbg(self, canvas_course):
-        with mock.patch('cnb.nbgrader.apps.NbGraderAPI') as mock_api:
-            cnb.NBGraderInterface()
+    def test_init_nbg(self, mock_api, canvas_course):
+
+        cnb.NBGraderInterface()
         mock_api.assert_called()
 
     @mock.patch('cnb.subprocess')
-    def test_import(self, mock_subprocessing, canvas_course):
+    def test_import(self, mock_subprocessing, mock_api, canvas_course):
         canvas_course.nbgrader.import_students()
         mock_subprocessing.run.assert_called_with(
             ['nbgrader', 'db', 'student', 'import', 'students.csv']
         )
 
-    def test_read(self, canvas_course):
+    def test_read(self, mock_api, canvas_course):
         with mock.patch('cnb.pd.read_csv') as mock_read_csv:
             grades = pd.DataFrame(
                 dict(
@@ -383,28 +401,25 @@ class TestNBG:
         assert all(gs == expected)
         assert gs.name == expected.name
 
-    @mock.patch('cnb.subprocess')
-    def test_autograde(self, mock_subprocessing, canvas_course):
+    def test_autograde(self, mock_api, canvas_course):
 
         submission = mock.MagicMock(
-            user_id=88
+            user_id='88'
         )
-        submissions = [submission]
 
-        canvas_course.nbgrader.autograde('assignment', submissions)
-        mock_subprocessing.run.assert_called_with(
-            'nbgrader autograde assignment --student=88 --force'.split()
-        )
+        canvas_course.nbgrader.api = mock_api
+        canvas_course.nbgrader.autograde('1099', submission)
+        mock_api.autograde.assert_called()
 
     @mock.patch('cnb.subprocess')
-    def test_export(self, mock_subprocessing, canvas_course):
+    def test_export(self, mock_subprocessing, mock_api, canvas_course):
 
         canvas_course.nbgrader.export()
         mock_subprocessing.run.assert_called_with(
             ['nbgrader', 'export']
         )
 
-    def test_upgrade(self, canvas_course, capsys):
+    def test_upgrade(self, mock_api, canvas_course, capsys):
         submission = mock.MagicMock(
             user_id=88
         )

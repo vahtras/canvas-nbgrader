@@ -20,7 +20,7 @@ import nbgrader.apps
 
 from util import Timer
 
-__version__ = "0.0.1"
+__version__ = "0.0.4"
 
 PASS = "\033[32mPASSED\033[00m"
 FAIL = "\033[31mFAILED\033[00m"
@@ -254,17 +254,13 @@ class NBGraderInterface:
         path = pathlib.Path(f'downloaded/{lab}/archive')
         path.mkdir(parents=True, exist_ok=True)
 
-    def autograde(self, assignment_name, submissions):
+    def autograde(self, assignment_id, submission):
         """
         Grade student assignments
 
         Call: 'nbgrader autograde assignment_name --force'
         """
-        for s in submissions:
-            user_id = s.user_id
-            subprocess.run(
-                f'nbgrader autograde {assignment_name} --student={user_id} --force'.split()
-            )
+        self.api.autograde(assignment_id, submission.user_id)
 
     def export(self):
         """
@@ -297,6 +293,23 @@ def ungraded(submissions):
         iterable over ungraded submissions
     """
     return filter(lambda s: s.grade is None, submissions)
+
+
+def from_user(user_id):
+    """
+    Filter submissions beloning to user
+
+    :param user_id:
+        int
+    :return:
+        filter
+    """
+    def filtered(submissions):
+        return filter(lambda s: s.user_id == user_id, submissions)
+
+    return filtered
+
+
 
 
 def unmatching_grade(submissions):
@@ -417,7 +430,7 @@ def main():
             )
         exit()
 
-    if 'course_id' not in config:
+    if config.get('course_id') is None:
         print("Course-id undefined")
         exit()
     else:
