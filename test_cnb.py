@@ -404,12 +404,14 @@ class TestNBG:
     def test_autograde(self, mock_api, canvas_course):
 
         submission = mock.MagicMock(
-            user_id='88'
+            user_id=88,
+            assignment_id=1099,
         )
+        submissions = [submission]
 
         canvas_course.nbgrader.api = mock_api
-        canvas_course.nbgrader.autograde('1099', submission)
-        mock_api.autograde.assert_called()
+        canvas_course.nbgrader.autograde(submissions)
+        mock_api.autograde.assert_called_with(1099, 88)
 
     @mock.patch('cnb.subprocess')
     def test_export(self, mock_subprocessing, mock_api, canvas_course):

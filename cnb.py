@@ -254,13 +254,14 @@ class NBGraderInterface:
         path = pathlib.Path(f'downloaded/{lab}/archive')
         path.mkdir(parents=True, exist_ok=True)
 
-    def autograde(self, assignment_id, submission):
+    def autograde(self, submissions):
         """
         Grade student assignments
 
         Call: 'nbgrader autograde assignment_name --force'
         """
-        self.api.autograde(assignment_id, submission.user_id)
+        for s in submissions:
+            self.api.autograde(s.assignment_id, s.user_id)
 
     def export(self):
         """
