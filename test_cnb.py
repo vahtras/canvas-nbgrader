@@ -107,8 +107,13 @@ class TestWithFixture:
         MockPath.assert_called_with("downloaded/foo/archive")
         assert MockPath().mkdir.called_with(exist_ok=True)
 
-    test_data = dict(
+    test_data1 = dict(
         attachments=[{'url': '...files/7/download/foo.ipynb'}],
+        user_id=88,
+        grade=None,
+    )
+    test_data2 = dict(
+        attachments=[{'url': '...files/7/download/foo'}],
         user_id=88,
         grade=None,
     )
@@ -116,7 +121,8 @@ class TestWithFixture:
     @pytest.mark.parametrize(
         'test_data',
         [
-            test_data,
+            test_data1,
+            test_data2,
         ]
     )
     @mock.patch('cnb.requests.get')
@@ -175,6 +181,14 @@ class TestWithFixture:
             (
                 "assignment_3.ipynb",
                 "nb_name.ipynb",
+                "http://xyz/files/6/download...",
+                5,
+                "Mehta, Tanvi",
+                "mehtatanvi_5_6_nb_name.ipynb",
+            ),
+            (
+                "assignment_4.ipynb",
+                "nb_name",
                 "http://xyz/files/6/download...",
                 5,
                 "Mehta, Tanvi",
@@ -374,7 +388,7 @@ class TestNBG:
 
     def test_init_nbg(self, mock_api, canvas_course):
 
-        cnb.NBGraderInterface()
+        cnb.NBGraderInterface(canvas_course)
         mock_api.assert_called()
 
     @mock.patch('cnb.subprocess')
@@ -410,8 +424,8 @@ class TestNBG:
         submissions = [submission]
 
         canvas_course.nbgrader.api = mock_api
-        canvas_course.nbgrader.autograde(submissions)
-        mock_api.autograde.assert_called_with(1099, 88)
+        canvas_course.nbgrader.autograde('nb_name', submissions)
+        mock_api.autograde.assert_called_with('nb_name', '88')
 
     @mock.patch('cnb.subprocess')
     def test_export(self, mock_subprocessing, mock_api, canvas_course):

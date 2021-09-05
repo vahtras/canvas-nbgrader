@@ -4,6 +4,7 @@ canvas-nbgrader facilitates exchange of data between Canvas LMS and nbgrader
 """
 import argparse
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import configparser
 import functools
 import os
@@ -24,6 +25,8 @@ __version__ = "0.0.4"
 
 PASS = "\033[32mPASSED\033[00m"
 FAIL = "\033[31mFAILED\033[00m"
+OK = "\033[32m✓\033[00m"
+XX = "\033[31m✗\033[00m"
 
 
 class ConfigError(Exception):
@@ -65,7 +68,7 @@ class CanvasCourse:
             sid: s.sortable_name
             for sid, s in self.students.items()
         }
-        self.nbgrader = NBGraderInterface()
+        self.nbgrader = NBGraderInterface(self)
 
     def __str__(self):
         return self.course.name
@@ -158,7 +161,7 @@ class CanvasCourse:
     async def adownload(self, url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
-                return await r.text()
+                return await r.text(encoding='utf8')
 
     def isubmissions(self, assignment_id):
         assignment = self.course.get_assignment(assignment_id)
@@ -178,6 +181,8 @@ class CanvasCourse:
         lastfirst = f"{last}{first}".replace(' ', '').lower()
 
         new_name = f"{lastfirst}_{s.user_id}_{file_id}_{nb_name}"
+        if not new_name.endswith('.ipynb'):
+            new_name += '.ipynb'
         return new_name
 
     def get_nbgrader_grades(self, assignment=None, csv_file='grades.csv'):
@@ -233,10 +238,15 @@ class CanvasCourse:
             except KeyError:
                 print(submission.user_id, 'not in grades')
 
+    def add_comment(self, submissions, text):
+        for submission in submissions:
+            submission.edit(comment={'text_comment': text})
+
 
 class NBGraderInterface:
 
-    def __init__(self):
+    def __init__(self, course):
+        self.course = course
         self.api = nbgrader.apps.NbGraderAPI()
 
     def import_students(self):
@@ -254,14 +264,33 @@ class NBGraderInterface:
         path = pathlib.Path(f'downloaded/{lab}/archive')
         path.mkdir(parents=True, exist_ok=True)
 
-    def autograde(self, submissions):
+    def autograde(self, assignment_name, submissions):
         """
         Grade student assignments
 
         Call: 'nbgrader autograde assignment_name --force'
         """
-        for s in submissions:
-            self.api.autograde(s.assignment_id, s.user_id)
+        submissions = list(submissions)
+
+        def grade(s, name=assignment_name):
+            result = self.api.autograde(name, str(s.user_id), force=True)
+            return result
+
+        #results = map(grade, submissions)
+
+        with ThreadPoolExecutor() as executor:
+            results = executor.map(grade, submissions)
+
+        failed = []
+        for r, s in zip(results, submissions):
+            if r['success']:
+                print(s.user_id, s.grade, OK)
+            else:
+                print(s.user_id, s.grade, XX)
+                print(f"---ERROR---\n{r['error']}\n")
+                print(f"---LOG---\n{r['log']}\n")
+                failed.append((r, s))
+        return failed
 
     def export(self):
         """
