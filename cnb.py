@@ -317,7 +317,7 @@ class NBGraderInterface:
 
         $ nbgrader export
         """
-        subprocess.run('nbgrader zip_collect {assignment_name} --force'.split())
+        subprocess.run(f'nbgrader zip_collect {assignment_name} --force'.split())
 
 
 def has_attachments(submissions):
