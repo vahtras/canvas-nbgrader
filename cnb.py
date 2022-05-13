@@ -21,6 +21,15 @@ import nbgrader.apps
 
 from util import Timer
 
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
+formatter = logging.Formatter("%(levelname)s:%(funcName)s:%(message)s")
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
 __version__ = "0.0.4"
 
 PASS = "\033[32mPASSED\033[00m"
@@ -119,6 +128,7 @@ class CanvasCourse:
             submissions = f(submissions)
         submissions = list(submissions)
 
+
         filenames = [
             self.generate_unique_filename(s, nb_names[0])
             for s in submissions
@@ -161,7 +171,8 @@ class CanvasCourse:
     async def adownload(self, url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
-                return await r.text(encoding='utf8')
+                text = await r.text(encoding='utf-8')
+                return text
 
     def isubmissions(self, assignment_id):
         assignment = self.course.get_assignment(assignment_id)
@@ -300,6 +311,14 @@ class NBGraderInterface:
         """
         subprocess.run('nbgrader export'.split())
 
+    def zip_collect(self, assignment_name, submissions):
+        """
+        Export grade file from database
+
+        $ nbgrader export
+        """
+        subprocess.run('nbgrader zip_collect {assignment_name} --force'.split())
+
 
 def has_attachments(submissions):
     """
@@ -323,6 +342,18 @@ def ungraded(submissions):
         iterable over ungraded submissions
     """
     return filter(lambda s: s.grade is None, submissions)
+
+
+def has_url(submissions):
+    """
+    Filter submissions with url
+
+    :param submissions:
+        iterable
+    :return:
+        iterable over submissions with non-None url
+    """
+    return filter(lambda s: s.url is not None, submissions)
 
 
 def from_user(user_id):
