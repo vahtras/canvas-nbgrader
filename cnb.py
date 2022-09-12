@@ -287,10 +287,10 @@ class NBGraderInterface:
             result = self.api.autograde(name, str(s.user_id), force=True)
             return result
 
-        #results = map(grade, submissions)
+        results = map(grade, submissions)
 
-        with ThreadPoolExecutor() as executor:
-            results = executor.map(grade, submissions)
+        #with ThreadPoolExecutor() as executor:
+        #    results = executor.map(grade, submissions)
 
         failed = []
         for r, s in zip(results, submissions):
@@ -356,6 +356,18 @@ def has_url(submissions):
     return filter(lambda s: s.url is not None, submissions)
 
 
+def has_attachment_or_url(submissions):
+    """
+    Filter submissions with attachment or url
+
+    :param submissions:
+        iterable
+    :return:
+        iterable over submissions with non-None attachment or url
+    """
+    return filter(lambda s: hasattr(s, 'attachments') or s.url is not None, submissions)
+
+
 def from_user(user_id):
     """
     Filter submissions beloning to user
@@ -371,8 +383,6 @@ def from_user(user_id):
     return filtered
 
 
-
-
 def unmatching_grade(submissions):
     """
     Filter submissions that are ungraded
@@ -385,16 +395,16 @@ def unmatching_grade(submissions):
     return filter(lambda s: not s.grade_matches_current_submission, submissions)
 
 
-def has_url(submissions):
+def ungraded_or_unmatching(submissions):
     """
-    Filter submissions with url
+    Filter submissions that are ungraded or unmatching grade (resubmissions)
 
     :param submissions:
         iterable
     :return:
-        iterable over submissions with url
+        iterable over ungraded submissions
     """
-    return filter(lambda s: bool(s.url), submissions)
+    return filter(lambda s: s.grade is None or not s.grade_matches_current_submission, submissions)
 
 
 def get_attachment_urls(submissions):

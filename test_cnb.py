@@ -18,7 +18,7 @@ def canvas_course():
         with mock.patch("cnb.nbgrader.apps.NbGraderAPI"):
             canvas_course = cnb.CanvasCourse(
                 course_id=123,
-                canvas_url='foo',
+                canvas_url='http://foo',
                 canvas_token='bar',
             )
             yield canvas_course
@@ -296,7 +296,8 @@ class TestConfig:
 
 class TestMain:
 
-    def test_undefined(self, capsys):
+    @mock.patch('cnb.get_config', return_value={})
+    def test_undefined(self, mock_get_config, capsys):
         sys.argv[1:] = []
         with mock.patch('cnb.exit') as mock_exit:
             cnb.main()
@@ -425,7 +426,7 @@ class TestNBG:
 
         canvas_course.nbgrader.api = mock_api
         canvas_course.nbgrader.autograde('nb_name', submissions)
-        mock_api.autograde.assert_called_with('nb_name', '88')
+        mock_api.autograde.assert_called_with('nb_name', '88', force=True)
 
     @mock.patch('cnb.subprocess')
     def test_export(self, mock_subprocessing, mock_api, canvas_course):
