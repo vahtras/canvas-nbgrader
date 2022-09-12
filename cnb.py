@@ -4,7 +4,7 @@ canvas-nbgrader facilitates exchange of data between Canvas LMS and nbgrader
 """
 import argparse
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
+# from concurrent.futures import ThreadPoolExecutor
 import configparser
 import functools
 import os
@@ -127,7 +127,6 @@ class CanvasCourse:
         for f in filters:
             submissions = f(submissions)
         submissions = list(submissions)
-
 
         filenames = [
             self.generate_unique_filename(s, nb_names[0])
@@ -289,8 +288,8 @@ class NBGraderInterface:
 
         results = map(grade, submissions)
 
-        #with ThreadPoolExecutor() as executor:
-        #    results = executor.map(grade, submissions)
+        # with ThreadPoolExecutor() as executor:
+        #     results = executor.map(grade, submissions)
 
         failed = []
         for r, s in zip(results, submissions):
@@ -317,7 +316,9 @@ class NBGraderInterface:
 
         $ nbgrader export
         """
-        subprocess.run(f'nbgrader zip_collect {assignment_name} --force'.split())
+        subprocess.run(
+            f'nbgrader zip_collect {assignment_name} --force'.split()
+        )
 
 
 def has_attachments(submissions):
@@ -365,7 +366,9 @@ def has_attachment_or_url(submissions):
     :return:
         iterable over submissions with non-None attachment or url
     """
-    return filter(lambda s: hasattr(s, 'attachments') or s.url is not None, submissions)
+    return filter(
+        lambda s: hasattr(s, 'attachments') or s.url is not None, submissions
+    )
 
 
 def from_user(user_id):
@@ -392,7 +395,9 @@ def unmatching_grade(submissions):
     :return:
         iterable over ungraded submissions
     """
-    return filter(lambda s: not s.grade_matches_current_submission, submissions)
+    return filter(
+        lambda s: not s.grade_matches_current_submission, submissions
+    )
 
 
 def ungraded_or_unmatching(submissions):
@@ -404,7 +409,10 @@ def ungraded_or_unmatching(submissions):
     :return:
         iterable over ungraded submissions
     """
-    return filter(lambda s: s.grade is None or not s.grade_matches_current_submission, submissions)
+    return filter(
+        lambda s: s.grade is None or not s.grade_matches_current_submission,
+        submissions
+    )
 
 
 def get_attachment_urls(submissions):
@@ -492,12 +500,13 @@ def main():
 
     if args['verify']:
         if not config['canvas_url']:
-            print(f"CANVAS_URL not defined")
+            print("CANVAS_URL not defined")
         if not config['canvas_token']:
-            print(f"CANVAS_TOKEN not defined")
+            print("CANVAS_TOKEN not defined")
         else:
             print(
-                f"Connecting to {config['canvas_url']} as {config['canvas_token']}"
+                f"Connecting to {config['canvas_url']} "
+                f"as {config['canvas_token']}"
             )
         exit()
 
