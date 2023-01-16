@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "canvas-nbgrader"
+version = "0.0.5"
+dependencies = [
+    "aiohttp==3.8.1",
+    "build==0.10.0",
+    "canvasapi==2.2.0",
+    "jupyter==1.0.0",
+    "nbgrader==0.8.0",
+    "pandas==1.4.2",
+    "python-dotenv==0.20.0",
+    "rich==12.2.0",
+    "testpath==0.6.0",
+]
