@@ -3,12 +3,14 @@ import os
 import sys
 from unittest import mock
 import zipfile
-import warnings
+# import warnings
 
 import pytest
 import pandas as pd
 
 import cnb
+
+MockCourse = collections.namedtuple('MockCourse', ['id', 'name'])
 
 
 @pytest.fixture
@@ -60,18 +62,20 @@ class TestConnect:
     def test_connect_arg(self, MockCanvas):
         "Set up connection with call arguments"
 
-        c = cnb.CanvasConnection(canvas_url='foo', canvas_token='bar')
+        cc = cnb.CanvasConnection(canvas_url='foo', canvas_token='bar')
 
         MockCanvas.assert_called_with("foo", "bar")
-        assert c.connection == MockCanvas()
+        assert cc.connection == MockCanvas()
 
     def test_list_courses(self, MockCanvas):
         "List your courses on Canvas"
 
-        c = cnb.CanvasConnection(canvas_url='foo', canvas_token='bar')
-        c.list_courses()
+        cc = cnb.CanvasConnection(canvas_url='foo', canvas_token='bar')
+        mock_courses = [MockCourse(1, 'python')]
+        cc.connection.get_courses.return_value = mock_courses
+        cc.list_courses()
 
-        assert c.connection.get_courses.called
+        assert cc.connection.get_courses.called
 
     def test_verify_connection(self, MockCanvas, capsys):
         os.environ['CANVAS_URL'] = 'foo'

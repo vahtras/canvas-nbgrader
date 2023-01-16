@@ -103,7 +103,7 @@ class CanvasCourse:
         students = self.students.values()
         ids = [s.id for s in students]
         names = [s.sortable_name for s in students]
-        emails = [getattr(s, 'login_id', None) for s in students]
+        emails = [getattr(s, 'email', None) for s in students]
         df = pd.DataFrame({
             'id': ids,
             'last_name': [n.split(', ')[0] for n in names],
@@ -330,7 +330,7 @@ def has_attachments(submissions):
     :return:
         iterable over submissions with attachments
     """
-    return filter(lambda s: hasattr(s, 'attachments'), submissions)
+    return filter(lambda s: hasattr(s, 'attachments') and s.attachments, submissions)
 
 
 def ungraded(submissions):
@@ -497,6 +497,7 @@ def main():
 
     args = command_line_args()
     config = get_config(**args)
+    c = None
 
     if args['verify']:
         if not config['canvas_url']:
@@ -521,6 +522,8 @@ def main():
 
     if args['assignment']:
         list_ungraded(c, args['assignment'])
+
+    return c
 
 
 if __name__ == "__main__":
