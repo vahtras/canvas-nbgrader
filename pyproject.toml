@@ -6,13 +6,19 @@ build-backend = "setuptools.build_meta"
 name = "canvas-nbgrader"
 version = "0.0.5"
 dependencies = [
-    "aiohttp==3.8.1",
-    "build==0.10.0",
-    "canvasapi==2.2.0",
+    "aiohttp==3.8.4",
+    "canvasapi==3.2.0",
+    "fqdn==1.5.1",
+    "isoduration==20.11.0",
+    "jsonpointer==2.3",
     "jupyter==1.0.0",
-    "nbgrader==0.8.0",
-    "pandas==1.4.2",
-    "python-dotenv==0.20.0",
-    "rich==12.2.0",
+    "jupyter-server-terminals==0.4.4",
+    "nbgrader==0.8.4",
+    "overrides==7.3.1",
+    "pandas==2.0.2",
+    "python-dotenv==1.0.0",
+    "rich==13.4.2",
     "testpath==0.6.0",
+    "uri-template==1.2.0",
+    "webcolors==1.13",
 ]
