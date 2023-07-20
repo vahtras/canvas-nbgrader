@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "canvas-nbgrader"
 version = "0.0.5"
 dependencies = [
-    "aiohttp==3.8.4",
+    "aiohttp==3.8.5",
     "canvasapi==3.2.0",
     "fqdn==1.5.1",
     "isoduration==20.11.0",
