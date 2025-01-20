@@ -91,7 +91,7 @@ class TestConnect:
 class TestWithFixture:
     def test_get_students(self, canvas_course):
         canvas_course.get_students_as_df()
-        assert canvas_course.course.get_users.called_with(role="student")
+        canvas_course.course.get_users.assert_called_with(enrollment_type=["student"])
 
     def test_download_students(self, canvas_course):
 
@@ -109,7 +109,7 @@ class TestWithFixture:
             canvas_course.nbgrader.init_downloads_area('foo')
 
         MockPath.assert_called_with("downloaded/foo/archive")
-        assert MockPath().mkdir.called_with(exist_ok=True)
+        MockPath().mkdir.assert_called_with(parents=True, exist_ok=True)
 
     test_data1 = dict(
         attachments=[{'url': '...files/7/download/foo.ipynb'}],
@@ -415,7 +415,7 @@ class TestNBG:
             mock_read_csv.return_value = grades
             gs = canvas_course.get_nbgrader_grades(assignment=2)
 
-        assert mock_read_csv.called_with('grades.csv')
+        mock_read_csv.assert_called_with('grades.csv')
         expected = pd.Series([6], index=[4], name='score')
         assert all(gs == expected)
         assert gs.name == expected.name
@@ -448,6 +448,6 @@ class TestNBG:
 
         canvas_course.update_to_pass(submissions)
 
-        assert submission.edit().called_with(
+        submission.edit.assert_called_with(
             submission={'posted_grade': 'complete'}
         )

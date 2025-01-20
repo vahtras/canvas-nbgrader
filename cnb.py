@@ -151,6 +151,7 @@ class CanvasCourse:
 
     def get_urls(self, submissions):
         return [s.attachments[0]['url'] for s in submissions]
+        #return [s.attachments[0].url for s in submissions]
 
     def get_downloads(self, urls):
         downloads = [requests.get(url).text for url in urls]
@@ -184,6 +185,7 @@ class CanvasCourse:
         file_id = re.search(
             r'files/(\d+)/download',
             s.attachments[0]['url']
+            #s.attachments[0].url
         ).group(1)
 
         user = self.students[submission.user_id]
@@ -367,7 +369,8 @@ def has_attachment_or_url(submissions):
         iterable over submissions with non-None attachment or url
     """
     return filter(
-        lambda s: hasattr(s, 'attachments') or s.url is not None, submissions
+        lambda s: hasattr(s, 'attachments') and s.attachments or s.url is not None,
+        submissions
     )
 
 
