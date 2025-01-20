@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "canvas-nbgrader"
-version = "0.0.5"
+version = "0.0.6"
 dependencies = [
     "aiohttp==3.11.11",
     "backports.tarfile==1.2.0",
