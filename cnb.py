@@ -4,7 +4,7 @@ canvas-nbgrader facilitates exchange of data between Canvas LMS and nbgrader
 """
 import argparse
 import asyncio
-# from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 import configparser
 import functools
 import os
@@ -18,6 +18,7 @@ import pandas as pd
 import canvasapi
 import aiohttp
 import nbgrader.apps
+from rich.progress import track
 
 from util import Timer
 
@@ -113,7 +114,7 @@ class CanvasCourse:
         return df
 
     def download_submissions_with_attachments(
-            self, assignment_id: int, lab_name, nb_names: str, filters=[],
+            self, assignment_id: int, lab_name: str, nb_names: list[str], filters=[],
             ):
         """
         Create zipfile of submission attachments as in Canvas web client"
@@ -129,8 +130,9 @@ class CanvasCourse:
         submissions = list(submissions)
 
         filenames = [
-            self.generate_unique_filename(s, nb_names[0])
+            self.generate_unique_filename(s, n)
             for s in submissions
+            for n in sorted(nb_names)
         ]
 
         urls = self.get_urls(submissions)
@@ -150,8 +152,12 @@ class CanvasCourse:
         print(f'-> {zip_name}')
 
     def get_urls(self, submissions):
-        return [s.attachments[0]['url'] for s in submissions]
-        #return [s.attachments[0].url for s in submissions]
+        #return [s.attachments[0]['url'] for s in submissions]
+        return [
+            a["url"]
+            for s in submissions
+            for a in sorted(s.attachments, key=lambda _: _["display_name"])
+        ]
 
     def get_downloads(self, urls):
         downloads = [requests.get(url).text for url in urls]
@@ -185,7 +191,6 @@ class CanvasCourse:
         file_id = re.search(
             r'files/(\d+)/download',
             s.attachments[0]['url']
-            #s.attachments[0].url
         ).group(1)
 
         user = self.students[submission.user_id]
@@ -193,8 +198,8 @@ class CanvasCourse:
         lastfirst = f"{last}{first}".replace(' ', '').lower()
 
         new_name = f"{lastfirst}_{s.user_id}_{file_id}_{nb_name}"
-        if not new_name.endswith('.ipynb'):
-            new_name += '.ipynb'
+        #if not new_name.endswith('.ipynb'):
+        #    new_name += '.ipynb'
         return new_name
 
     def get_nbgrader_grades(self, assignment=None, csv_file='grades.csv'):
@@ -293,10 +298,18 @@ class NBGraderInterface:
         # with ThreadPoolExecutor() as executor:
         #     results = executor.map(grade, submissions)
 
+        # with ProcessPoolExecutor() as executor:
+        #     results = executor.map(grade, submissions)
+
         failed = []
-        for r, s in zip(results, submissions):
+        for r, s in track(
+            zip(results, submissions),
+            description='Autograding',
+            total=len(submissions),
+        ):
             if r['success']:
-                print(s.user_id, s.grade, OK)
+                pass
+                # print(s.user_id, s.grade, OK, end="")
             else:
                 print(s.user_id, s.grade, XX)
                 print(f"---ERROR---\n{r['error']}\n")
@@ -319,7 +332,7 @@ class NBGraderInterface:
         $ nbgrader export
         """
         subprocess.run(
-            f'nbgrader zip_collect {assignment_name} --force'.split()
+            f'nbgrader zip_collect "{assignment_name}" --force', shell=True
         )
 
 
@@ -530,4 +543,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    canvas_course = main()

@@ -12,3 +12,6 @@ build
 .coverage
 untracked
 htmlcov
+.tox
+docker
+sandbox

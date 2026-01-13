@@ -112,12 +112,12 @@ class TestWithFixture:
         MockPath().mkdir.assert_called_with(parents=True, exist_ok=True)
 
     test_data1 = dict(
-        attachments=[{'url': '...files/7/download/foo.ipynb'}],
+        attachments=[{'url': '...files/7/download/foo.ipynb', 'display_name': 'foo.ipynb'}],
         user_id=88,
         grade=None,
     )
     test_data2 = dict(
-        attachments=[{'url': '...files/7/download/foo'}],
+            attachments=[{'url': '...files/7/download/foo', 'display_name': 'foo'}],
         user_id=88,
         grade=None,
     )
@@ -192,7 +192,7 @@ class TestWithFixture:
             ),
             (
                 "assignment_4.ipynb",
-                "nb_name",
+                "nb_name.ipynb",
                 "http://xyz/files/6/download...",
                 5,
                 "Mehta, Tanvi",
@@ -209,7 +209,7 @@ class TestWithFixture:
 
         canvas_course.students = {user_id: student}
         submission.attachments = [
-            dict(display_name=f"{upload_name}.ipynb", url=url)
+            dict(display_name=f"{upload_name}", url=url)
         ]
         canvas_course.canvas.connection.get_course().get_user().sortable_name \
             = user_name
